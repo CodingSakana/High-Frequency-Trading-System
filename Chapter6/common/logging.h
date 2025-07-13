@@ -8,9 +8,10 @@
 #include "lf_queue.h"
 #include "thread_utils.h"
 #include "time_utils.h"
+#include "types.h"
 
 namespace Common {
-  constexpr size_t LOG_QUEUE_SIZE = 8 * 1024 * 1024;
+  // constexpr size_t LOG_QUEUE_SIZE = 8 * 1024 * 1024;
 
   enum class LogType : int8_t {
     CHAR = 0,
