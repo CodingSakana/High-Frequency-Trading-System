@@ -87,6 +87,7 @@ public:
     MatchingEngine& operator=(const MatchingEngine&&) = delete;
 
 private:
+    // 跟踪每个交易工具的限价订单簿
     OrderBookHashMap ticker_order_book_;
 
     ClientRequestLFQueue* incoming_requests_ = nullptr;

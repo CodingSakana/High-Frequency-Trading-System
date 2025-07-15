@@ -43,6 +43,8 @@ public:
 
                 ASSERT(cid_tcp_socket_[client_response->client_id_] != nullptr,
                        "Dont have a TCPSocket for ClientId:" + std::to_string(client_response->client_id_));
+
+                /* 这两个 send 只是发送到缓冲区，所以这样就相当于发送了一个 OMClientResponse */
                 cid_tcp_socket_[client_response->client_id_]->send(&next_outgoing_seq_num,
                                                                    sizeof(next_outgoing_seq_num));
                 cid_tcp_socket_[client_response->client_id_]->send(client_response, sizeof(MEClientResponse));

@@ -30,6 +30,7 @@ MatchingEngine::~MatchingEngine() {
     }
 }
 
+// 创建并启动一个线程来执行 run() 方法
 auto MatchingEngine::start() -> void {
     run_ = true;
     ASSERT(Common::createAndStartThread(-1, "Exchange/MatchingEngine", [this]() { run(); }) != nullptr,
