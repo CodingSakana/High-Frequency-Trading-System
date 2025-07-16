@@ -12,7 +12,7 @@ namespace Exchange {
     INVALID = 0,
     ACCEPTED = 1,
     CANCELED = 2,
-    FILLED = 3,
+    FILLED = 3, /* The order (or a portion of it) has been executed */
     CANCEL_REJECTED = 4
   };
 

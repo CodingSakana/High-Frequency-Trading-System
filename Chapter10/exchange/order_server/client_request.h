@@ -2,36 +2,35 @@
 
 #include <sstream>
 
-#include "common/types.h"
 #include "common/lf_queue.h"
+#include "common/types.h"
 
 using namespace Common;
 
-namespace Exchange {
-  /// Type of the order request sent by the trading client to the exchange.
-  enum class ClientRequestType : uint8_t {
-    INVALID = 0,
-    NEW = 1,
-    CANCEL = 2
-  };
+namespace Exchange
+{
+/// Type of the order request sent by the trading client to the exchange.
+enum class ClientRequestType : uint8_t { INVALID = 0, NEW = 1, CANCEL = 2 };
 
-  inline std::string clientRequestTypeToString(ClientRequestType type) {
+inline std::string clientRequestTypeToString(ClientRequestType type) {
     switch (type) {
-      case ClientRequestType::NEW:
+    case ClientRequestType::NEW:
         return "NEW";
-      case ClientRequestType::CANCEL:
+    case ClientRequestType::CANCEL:
         return "CANCEL";
-      case ClientRequestType::INVALID:
+    case ClientRequestType::INVALID:
         return "INVALID";
     }
     return "UNKNOWN";
-  }
+}
 
-  /// These structures go over the wire / network, so the binary structures are packed to remove system dependent extra padding.
+/// 告诉编译器从这一行开始，将结构体成员按 1 字节对齐，并保存之前的对齐设置
+/// These structures go over the wire / network, so the binary structures are packed to remove system dependent extra
+/// padding.
 #pragma pack(push, 1)
 
-  /// Client request structure used internally by the matching engine.
-  struct MEClientRequest {
+/// Client request structure used internally by the matching engine.
+struct MEClientRequest {
     ClientRequestType type_ = ClientRequestType::INVALID;
 
     ClientId client_id_ = ClientId_INVALID;
@@ -42,39 +41,33 @@ namespace Exchange {
     Qty qty_ = Qty_INVALID;
 
     auto toString() const {
-      std::stringstream ss;
-      ss << "MEClientRequest"
-         << " ["
-         << "type:" << clientRequestTypeToString(type_)
-         << " client:" << clientIdToString(client_id_)
-         << " ticker:" << tickerIdToString(ticker_id_)
-         << " oid:" << orderIdToString(order_id_)
-         << " side:" << sideToString(side_)
-         << " qty:" << qtyToString(qty_)
-         << " price:" << priceToString(price_)
-         << "]";
-      return ss.str();
+        std::stringstream ss;
+        ss << "MEClientRequest"
+           << " ["
+           << "type:" << clientRequestTypeToString(type_) << " client:" << clientIdToString(client_id_)
+           << " ticker:" << tickerIdToString(ticker_id_) << " oid:" << orderIdToString(order_id_)
+           << " side:" << sideToString(side_) << " qty:" << qtyToString(qty_) << " price:" << priceToString(price_)
+           << "]";
+        return ss.str();
     }
-  };
+};
 
-  /// Client request structure published over the network by the order gateway client.
-  struct OMClientRequest {
+/// Client request structure published over the network by the order gateway client.
+struct OMClientRequest {
     size_t seq_num_ = 0;
     MEClientRequest me_client_request_;
 
     auto toString() const {
-      std::stringstream ss;
-      ss << "OMClientRequest"
-         << " ["
-         << "seq:" << seq_num_
-         << " " << me_client_request_.toString()
-         << "]";
-      return ss.str();
+        std::stringstream ss;
+        ss << "OMClientRequest"
+           << " ["
+           << "seq:" << seq_num_ << " " << me_client_request_.toString() << "]";
+        return ss.str();
     }
-  };
+};
 
 #pragma pack(pop) // Undo the packed binary structure directive moving forward.
 
-  /// Lock free queues of matching engine client order request messages.
-  typedef LFQueue<MEClientRequest> ClientRequestLFQueue;
-}
+/// Lock free queues of matching engine client order request messages.
+typedef LFQueue<MEClientRequest> ClientRequestLFQueue;
+} // namespace Exchange

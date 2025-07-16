@@ -1,7 +1,8 @@
 #include "me_order.h"
 
-namespace Exchange {
-  auto MEOrder::toString() const -> std::string {
+namespace Exchange
+{
+auto MEOrder::toString() const -> std::string {
     std::stringstream ss;
     ss << "MEOrder" << "["
        << "ticker:" << tickerIdToString(ticker_id_) << " "
@@ -16,5 +17,5 @@ namespace Exchange {
        << "next:" << orderIdToString(next_order_ ? next_order_->market_order_id_ : OrderId_INVALID) << "]";
 
     return ss.str();
-  }
 }
+} // namespace Exchange
