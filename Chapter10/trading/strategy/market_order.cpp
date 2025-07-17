@@ -1,7 +1,8 @@
 #include "market_order.h"
 
-namespace Trading {
-  auto MarketOrder::toString() const -> std::string {
+namespace Trading
+{
+auto MarketOrder::toString() const -> std::string {
     std::stringstream ss;
     ss << "MarketOrder" << "["
        << "oid:" << orderIdToString(order_id_) << " "
@@ -13,5 +14,5 @@ namespace Trading {
        << "next:" << orderIdToString(next_order_ ? next_order_->order_id_ : OrderId_INVALID) << "]";
 
     return ss.str();
-  }
 }
+} // namespace Trading

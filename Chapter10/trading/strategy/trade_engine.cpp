@@ -10,6 +10,7 @@ TradeEngine::TradeEngine(Common::ClientId client_id, AlgoType algo_type, const T
       incoming_md_updates_(market_updates), logger_("trading_engine_" + std::to_string(client_id) + ".log"),
       feature_engine_(&logger_), position_keeper_(&logger_), order_manager_(&logger_, this, risk_manager_),
       risk_manager_(&logger_, &position_keeper_, ticker_cfg) {
+    /* 就是为每一个 ticker 初始化一个 order book 并绑定到这个 TE */
     for (size_t i = 0; i < ticker_order_book_.size(); ++i) {
         ticker_order_book_[i] = new MarketOrderBook(i, &logger_);
         ticker_order_book_[i]->setTradeEngine(this);
@@ -24,6 +25,7 @@ TradeEngine::TradeEngine(Common::ClientId client_id, AlgoType algo_type, const T
 
     // Create the trading algorithm instance based on the AlgoType provided.
     // The constructor will override the callbacks above for order book changes, trade events and client responses.
+    /** 这个 MarketMaker 和 LiquidityTaker 构造函数会覆盖之前设置的三个默认 algo 默认函数 */
     if (algo_type == AlgoType::MAKER) {
         mm_algo_ = new MarketMaker(&logger_, this, &feature_engine_, &order_manager_, ticker_cfg);
     } else if (algo_type == AlgoType::TAKER) {

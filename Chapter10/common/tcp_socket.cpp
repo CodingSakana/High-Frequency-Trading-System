@@ -19,8 +19,8 @@ auto TCPSocket::connect(const std::string& ip, const std::string& iface, int por
 /**
  * 在非阻塞 TCP socket 上：
  *      接收网络数据（包括内核提供的接收时间戳）
- *      发送已准备好的发送数据
  *      触发回调处理已收到的数据
+ *      发送已准备好的发送数据
  */
 /// Called to publish outgoing data from the buffers as well as check for and callback if data is available in the read
 /// buffers.

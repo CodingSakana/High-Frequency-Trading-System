@@ -91,13 +91,9 @@ public:
 
     /// Deleted default, copy & move constructors and assignment-operators.
     TradeEngine() = delete;
-
     TradeEngine(const TradeEngine&) = delete;
-
     TradeEngine(const TradeEngine&&) = delete;
-
     TradeEngine& operator=(const TradeEngine&) = delete;
-
     TradeEngine& operator=(const TradeEngine&&) = delete;
 
 private:

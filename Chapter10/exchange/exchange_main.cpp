@@ -34,7 +34,7 @@ int main(int, char**) {
 
     std::signal(SIGINT, signal_handler);
 
-    const int sleep_time = 100 * 1000;
+    constexpr int sleep_time = 100 * 1000;
 
     // The lock free queues to facilitate communication between order server <-> matching engine and matching engine ->
     // market data publisher.
@@ -55,8 +55,14 @@ int main(int, char**) {
 
     logger->log("%:% %() % Starting Market Data Publisher...\n", __FILE__, __LINE__, __FUNCTION__,
                 Common::getCurrentTimeStr(&time_str));
-    market_data_publisher = new Exchange::MarketDataPublisher(&market_updates, mkt_pub_iface, snap_pub_ip,
-                                                              snap_pub_port, inc_pub_ip, inc_pub_port);
+    /**
+     * MarketDataPublisher::MarketDataPublisher(MEMarketUpdateLFQueue* market_updates, const std::string& iface,
+                                                const std::string& snapshot_ip, int snapshot_port,
+                                                const std::string& incremental_ip, int incremental_port)
+     */
+    market_data_publisher = new Exchange::MarketDataPublisher(&market_updates, mkt_pub_iface, 
+                                                              snap_pub_ip, snap_pub_port, 
+                                                              inc_pub_ip, inc_pub_port);
     market_data_publisher->start();
 
     const std::string order_gw_iface = "lo";
