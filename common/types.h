@@ -122,7 +122,7 @@ inline constexpr auto sideToValue(Side side) noexcept {
 }
 
 /// Type of trading algorithm.
-enum class AlgoType : int8_t { INVALID = 0, RANDOM = 1, MAKER = 2, TAKER = 3, MAX = 4 };
+enum class AlgoType : int8_t { INVALID = 0, RANDOM = 1, MAKER = 2, TAKER = 3, MANUAL = 4, MAX = 5 };
 
 inline auto algoTypeToString(AlgoType type) -> std::string {
     switch (type) {
@@ -134,6 +134,8 @@ inline auto algoTypeToString(AlgoType type) -> std::string {
         return "TAKER";
     case AlgoType::INVALID:
         return "INVALID";
+    case AlgoType::MANUAL:
+        return "MANUAL";
     case AlgoType::MAX:
         return "MAX";
     }
