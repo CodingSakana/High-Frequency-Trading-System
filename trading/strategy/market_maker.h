@@ -33,6 +33,7 @@ public:
             const auto clip = ticker_cfg_.at(ticker_id).clip_;
             const auto threshold = ticker_cfg_.at(ticker_id).threshold_;
 
+            /* 这个地方价格一但不一样了，其实就是 moveOrder 触发 CANCEL 操作了 */
             const auto bid_price = bbo->bid_price_ - (fair_price - bbo->bid_price_ >= threshold ? 0 : 1);
             const auto ask_price = bbo->ask_price_ + (bbo->ask_price_ - fair_price >= threshold ? 0 : 1);
 

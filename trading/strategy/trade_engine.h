@@ -21,6 +21,7 @@
 
 #include "liquidity_taker.h"
 #include "market_maker.h"
+#include "manual_algorithm.h"
 
 namespace Trading
 {
@@ -134,6 +135,7 @@ private:
     /// instance.
     MarketMaker* mm_algo_ = nullptr;
     LiquidityTaker* taker_algo_ = nullptr;
+    ManualAlgorithm* manual_algo = nullptr;
 
     /// Default methods to initialize the function wrappers.
     auto defaultAlgoOnOrderBookUpdate(TickerId ticker_id, Price price, Side side, MarketOrderBook*) noexcept -> void {

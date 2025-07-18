@@ -30,6 +30,8 @@ TradeEngine::TradeEngine(Common::ClientId client_id, AlgoType algo_type, const T
         mm_algo_ = new MarketMaker(&logger_, this, &feature_engine_, &order_manager_, ticker_cfg);
     } else if (algo_type == AlgoType::TAKER) {
         taker_algo_ = new LiquidityTaker(&logger_, this, &feature_engine_, &order_manager_, ticker_cfg);
+    } else if (algo_type == AlgoType::MANUAL) {
+        manual_algo = new ManualAlgorithm(&logger_, this, &feature_engine_, &order_manager_, ticker_cfg);
     }
 
     for (TickerId i = 0; i < ticker_cfg.size(); ++i) {
@@ -48,6 +50,8 @@ TradeEngine::~TradeEngine() {
     mm_algo_ = nullptr;
     delete taker_algo_;
     taker_algo_ = nullptr;
+    delete manual_algo;
+    manual_algo = nullptr;
 
     for (auto& order_book : ticker_order_book_) {
         delete order_book;
