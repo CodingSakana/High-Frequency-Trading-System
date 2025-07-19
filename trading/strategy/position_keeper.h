@@ -5,9 +5,9 @@
  * 具体记录的是 PositionInfo
  */
 
-#include "common/logging.h"
 #include "common/macros.h"
 #include "common/types.h"
+#include "common/logging.h"
 
 #include "exchange/order_server/client_response.h"
 

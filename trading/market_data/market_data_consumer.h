@@ -9,10 +9,10 @@
 #include <functional>
 #include <map>
 
+#include "common/thread_utils.h"
 #include "common/lf_queue.h"
 #include "common/macros.h"
 #include "common/mcast_socket.h"
-#include "common/thread_utils.h"
 
 #include "exchange/market_data/market_update.h"
 
@@ -74,7 +74,7 @@ private:
 
     /// Containers to queue up market data updates from the snapshot and incremental channels, queued up in order of
     /// increasing sequence numbers.
-    typedef std::map<size_t, Exchange::MEMarketUpdate> QueuedMarketUpdates;
+    using QueuedMarketUpdates = std::map<size_t, Exchange::MEMarketUpdate>;
     QueuedMarketUpdates snapshot_queued_msgs_, incremental_queued_msgs_;
 
 private:

@@ -3,9 +3,9 @@
 /** 
  * OrderManager 的内部“订单记录本”——用来建模、存储、查询和打印当前所有策略下发的、正在不同阶段的委托单。
  */
-#include "common/types.h"
 #include <array>
 #include <sstream>
+#include "common/types.h"
 
 using namespace Common;
 

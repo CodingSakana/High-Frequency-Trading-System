@@ -2,12 +2,12 @@
 
 /** 这个和 ME 的 order book 也差不多 */
 
-#include "common/logging.h"
-#include "common/mem_pool.h"
 #include "common/types.h"
+#include "common/mem_pool.h"
+#include "common/logging.h"
 
-#include "exchange/market_data/market_update.h"
 #include "market_order.h"
+#include "exchange/market_data/market_update.h"
 
 namespace Trading
 {

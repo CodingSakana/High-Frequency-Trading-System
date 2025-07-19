@@ -31,11 +31,20 @@ auto MarketDataPublisher::run() noexcept -> void {
             logger_.log("%:% %() % Sending seq:% %\n", __FILE__, __LINE__, __FUNCTION__,
                         Common::getCurrentTimeStr(&time_str_), next_inc_seq_num_, market_update->toString().c_str());
 
+#ifdef PERF
+            START_MEASURE(Exchange_McastSocket_send);
+#endif
             /* 这里就直接分两次发 相当于是构造了 MDP 的结构了 */
             incremental_socket_.send(&next_inc_seq_num_, sizeof(next_inc_seq_num_));
             incremental_socket_.send(market_update, sizeof(MEMarketUpdate));
+#ifdef PERF
+            END_MEASURE(Exchange_McastSocket_send, logger_);
+#endif
 
             outgoing_md_updates_->updateReadIndex();
+#ifdef PERF
+            TTT_MEASURE(T6_MarketDataPublisher_UDP_write, logger_);
+#endif
 
             /**
              * 这里通过使用 LFQueue 与 snapshot_synthesizer 进行通信的

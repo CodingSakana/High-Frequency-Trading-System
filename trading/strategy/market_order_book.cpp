@@ -20,10 +20,11 @@ MarketOrderBook::~MarketOrderBook() {
 
 /// Process market data update and update the limit order book.
 auto MarketOrderBook::onMarketUpdate(const Exchange::MEMarketUpdate* market_update) noexcept -> void {
+    bool was_empty = (!bids_by_price_ && !asks_by_price_);
     const auto bid_updated =
-        (bids_by_price_ && market_update->side_ == Side::BUY && market_update->price_ >= bids_by_price_->price_);
+        (was_empty || (bids_by_price_ && market_update->side_ == Side::BUY && market_update->price_ >= bids_by_price_->price_));
     const auto ask_updated =
-        (asks_by_price_ && market_update->side_ == Side::SELL && market_update->price_ <= asks_by_price_->price_);
+        (was_empty || (asks_by_price_ && market_update->side_ == Side::SELL && market_update->price_ <= asks_by_price_->price_));
 
     switch (market_update->type_) {
     case Exchange::MarketUpdateType::ADD: {
@@ -37,7 +38,13 @@ auto MarketOrderBook::onMarketUpdate(const Exchange::MEMarketUpdate* market_upda
     } break;
     case Exchange::MarketUpdateType::CANCEL: {
         auto order = oid_to_order_.at(market_update->order_id_);
+#ifdef PERF
+        START_MEASURE(Trading_MarketOrderBook_removeOrder);
+#endif
         removeOrder(order);
+#ifdef PERF
+        END_MEASURE(Trading_MarketOrderBook_removeOrder, (*logger_));
+#endif
     } break;
     case Exchange::MarketUpdateType::TRADE: {
         trade_engine_->onTradeUpdate(market_update, this);

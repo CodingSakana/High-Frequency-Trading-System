@@ -1,8 +1,8 @@
 #pragma once
 
-#include "common/types.h"
 #include <array>
 #include <sstream>
+#include "common/types.h"
 
 using namespace Common;
 

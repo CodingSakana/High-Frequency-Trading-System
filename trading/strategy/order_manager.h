@@ -4,8 +4,9 @@
  * 交易策略将使用这个来发送和管理挂单
  */
 
-#include "common/logging.h"
 #include "common/macros.h"
+#include "common/logging.h"
+#include "common/types.h"
 
 #include "exchange/order_server/client_response.h"
 
@@ -64,15 +65,64 @@ public:
         switch (order->order_state_) {
         case OMOrderState::LIVE: {
             if (order->price_ != price) {
+#ifdef PERF
+                START_MEASURE(Trading_OrderManager_cancelOrder);
+#endif
                 cancelOrder(order);
+#ifdef PERF
+                END_MEASURE(Trading_OrderManager_cancelOrder, (*logger_));
+#endif
+            } else {
+            // 同价改量：先做风控
+#ifdef PERF
+                START_MEASURE(Trading_RiskManager_checkPreTradeRisk);
+#endif
+                auto r = risk_manager_.checkPreTradeRisk(ticker_id, side, qty);
+#ifdef PERF
+                END_MEASURE(Trading_RiskManager_checkPreTradeRisk, (*logger_));
+#endif
+                if (r == RiskCheckResult::ALLOWED) {
+                    // 先撤单
+#ifdef PERF
+                    START_MEASURE(Trading_OrderManager_cancelOrder);
+#endif
+                    cancelOrder(order);
+#ifdef PERF
+                    END_MEASURE(Trading_OrderManager_cancelOrder, (*logger_));
+#endif
+                    // 再新单
+#ifdef PERF
+                    START_MEASURE(Trading_OrderManager_newOrder);
+#endif
+                    newOrder(order, ticker_id, price, side, qty);
+#ifdef PERF
+                    END_MEASURE(Trading_OrderManager_newOrder, (*logger_));
+#endif
+                } else {
+                    logger_->log("%:% %() Ticker:% Side:% Qty:% RiskCheckResult:%\n", __FILE__, __LINE__, __FUNCTION__,
+                                 Common::getCurrentTimeStr(&time_str_), tickerIdToString(ticker_id), sideToString(side),
+                                 qtyToString(qty), riskCheckResultToString(r));
+                }
             }
         } break;
         case OMOrderState::INVALID:
         case OMOrderState::DEAD: {
             if (LIKELY(price != Price_INVALID)) {
+#ifdef PERF
+                START_MEASURE(Trading_RiskManager_checkPreTradeRisk);
+#endif                
                 const auto risk_result = risk_manager_.checkPreTradeRisk(ticker_id, side, qty);
+#ifdef PERF                
+                END_MEASURE(Trading_RiskManager_checkPreTradeRisk, (*logger_));
+#endif                
                 if (LIKELY(risk_result == RiskCheckResult::ALLOWED)) {
+#ifdef PERF                    
+                    START_MEASURE(Trading_OrderManager_newOrder);
+#endif                    
                     newOrder(order, ticker_id, price, side, qty);
+#ifdef PERF                    
+                    END_MEASURE(Trading_OrderManager_newOrder, (*logger_));
+#endif                
                 } else
                     logger_->log("%:% %() % Ticker:% Side:% Qty:% RiskCheckResult:%\n", __FILE__, __LINE__,
                                  __FUNCTION__, Common::getCurrentTimeStr(&time_str_), tickerIdToString(ticker_id),
@@ -92,12 +142,24 @@ public:
     auto moveOrders(TickerId ticker_id, Price bid_price, Price ask_price, Qty clip) noexcept {
         {
             auto bid_order = &(ticker_side_order_.at(ticker_id).at(sideToIndex(Side::BUY)));
+#ifdef PERF
+            START_MEASURE(Trading_OrderManager_moveOrder);
+#endif            
             moveOrder(bid_order, ticker_id, bid_price, Side::BUY, clip);
+#ifdef PERF            
+            END_MEASURE(Trading_OrderManager_moveOrder, (*logger_));
+#endif        
         }
 
         {
             auto ask_order = &(ticker_side_order_.at(ticker_id).at(sideToIndex(Side::SELL)));
+#ifdef PERF            
+            START_MEASURE(Trading_OrderManager_moveOrder);
+#endif            
             moveOrder(ask_order, ticker_id, ask_price, Side::SELL, clip);
+#ifdef PERF            
+            END_MEASURE(Trading_OrderManager_moveOrder, (*logger_));
+#endif        
         }
     }
 

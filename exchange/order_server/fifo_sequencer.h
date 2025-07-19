@@ -1,6 +1,5 @@
 #pragma once
 
-#include "common/logging.h"
 #include "common/macros.h"
 #include "common/thread_utils.h"
 
@@ -21,7 +20,7 @@ public:
     ~FIFOSequencer() {
     }
 
-    /* 作为 recvCallback(socket, rx_time) */
+    /* 在 OrderServer::recvCallback(TCPSocket* socket, Nanos rx_time) 调用 */
     /// Queue up a client request, not processed immediately, processed when sequenceAndPublish() is called.
     auto addClientRequest(Nanos rx_time, const MEClientRequest& request) {
         if (pending_size_ >= pending_client_requests_.size()) {
@@ -53,6 +52,9 @@ public:
             auto next_write = incoming_requests_->getNextToWriteTo();
             *next_write = std::move(client_request.request_);
             incoming_requests_->updateWriteIndex();
+#ifdef PERF
+            TTT_MEASURE(T2_OrderServer_LFQueue_write, (*logger_));
+#endif
         }
 
         pending_size_ = 0;

@@ -1,10 +1,10 @@
 #pragma once
 
-#include "common/logging.h"
 #include "common/macros.h"
+#include "common/logging.h"
 
-#include "feature_engine.h"
 #include "order_manager.h"
+#include "feature_engine.h"
 
 using namespace Common;
 
@@ -37,8 +37,14 @@ public:
             const auto bid_price = bbo->bid_price_ - (fair_price - bbo->bid_price_ >= threshold ? 0 : 1);
             const auto ask_price = bbo->ask_price_ + (bbo->ask_price_ - fair_price >= threshold ? 0 : 1);
 
+#ifdef PERF
+            START_MEASURE(Trading_OrderManager_moveOrders);
+#endif
             /* 同时送进去买卖两种挂单 */
             order_manager_->moveOrders(ticker_id, bid_price, ask_price, clip);
+#ifdef PERF
+            END_MEASURE(Trading_OrderManager_moveOrders, (*logger_));
+#endif
         }
     }
 
@@ -53,7 +59,13 @@ public:
         logger_->log("%:% %() % %\n", __FILE__, __LINE__, __FUNCTION__, Common::getCurrentTimeStr(&time_str_),
                      client_response->toString().c_str());
 
+#ifdef PERF
+        START_MEASURE(Trading_OrderManager_onOrderUpdate);
+#endif
         order_manager_->onOrderUpdate(client_response);
+#ifdef PERF
+        END_MEASURE(Trading_OrderManager_onOrderUpdate, (*logger_));
+#endif
     }
 
     /// Deleted default, copy & move constructors and assignment-operators.

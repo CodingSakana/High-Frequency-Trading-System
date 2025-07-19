@@ -10,9 +10,9 @@
 
 #include <functional>
 
+#include "common/thread_utils.h"
 #include "common/macros.h"
 #include "common/tcp_server.h"
-#include "common/thread_utils.h"
 
 #include "exchange/order_server/client_request.h"
 #include "exchange/order_server/client_response.h"

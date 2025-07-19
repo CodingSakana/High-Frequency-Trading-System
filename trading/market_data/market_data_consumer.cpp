@@ -195,7 +195,13 @@ auto MarketDataConsumer::queueMessage(bool is_snapshot, const Exchange::MDPMarke
 /// Process a market data update, the consumer needs to use the socket parameter to figure out whether this came from
 /// the snapshot or the incremental stream.
 auto MarketDataConsumer::recvCallback(McastSocket* socket) noexcept -> void {
-    /* 如果连 snap socket 都还没初始化，那么 snapshot_mcast_socket_.socket_fd_ = -1 */
+#ifdef PERF
+    TTT_MEASURE(T7_MarketDataConsumer_UDP_read, logger_);
+#endif
+#ifdef PERF
+    START_MEASURE(Trading_MarketDataConsumer_recvCallback);
+#endif
+    /* 如果连 snap socket 都还没初始化，那么 snapshot_mcast_socket_.socket_fd_ == -1 */
     const auto is_snapshot = (socket->socket_fd_ == snapshot_mcast_socket_.socket_fd_);
     if (UNLIKELY(is_snapshot && !in_recovery_)) { // market update was read from the snapshot market data stream and we
                                                   // are not in recovery, so we dont need it and discard it.
@@ -255,11 +261,17 @@ auto MarketDataConsumer::recvCallback(McastSocket* socket) noexcept -> void {
                 auto next_write = incoming_md_updates_->getNextToWriteTo();
                 *next_write = std::move(request->me_market_update_);
                 incoming_md_updates_->updateWriteIndex();
+#ifdef PERF
+                TTT_MEASURE(T8_MarketDataConsumer_LFQueue_write, logger_);
+#endif
             }
         }
         /* 已处理的字节用未处理字节区域覆盖掉 */
         memcpy(socket->inbound_data_.data(), socket->inbound_data_.data() + i, socket->next_rcv_valid_index_ - i);
         socket->next_rcv_valid_index_ -= i;
     }
+#ifdef PERF
+    END_MEASURE(Trading_MarketDataConsumer_recvCallback, logger_);
+#endif
 }
 } // namespace Trading

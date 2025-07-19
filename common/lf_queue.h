@@ -1,8 +1,8 @@
 #pragma once
 
-#include <atomic>
 #include <iostream>
 #include <vector>
+#include <atomic>
 
 #include "macros.h"
 

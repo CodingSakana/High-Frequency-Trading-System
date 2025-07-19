@@ -1,10 +1,10 @@
 #pragma once
 
-#include "common/logging.h"
 #include "common/macros.h"
+#include "common/logging.h"
 
-#include "om_order.h"
 #include "position_keeper.h"
+#include "om_order.h"
 
 using namespace Common;
 
@@ -50,9 +50,10 @@ struct RiskInfo {
     auto checkPreTradeRisk(Side side, Qty qty) const noexcept {
         // check order-size
         if (UNLIKELY(qty > risk_cfg_.max_order_size_)) return RiskCheckResult::ORDER_TOO_LARGE;
-        if (UNLIKELY(std::abs(position_info_->position_ + sideToValue(side) * static_cast<int32_t>(qty)) >
+        if (UNLIKELY(risk_cfg_.max_position_ != Qty_INVALID && std::abs(position_info_->position_ + sideToValue(side) * static_cast<int32_t>(qty)) >
                      static_cast<int32_t>(risk_cfg_.max_position_)))
             return RiskCheckResult::POSITION_TOO_LARGE;
+        
         if (UNLIKELY(position_info_->total_pnl_ < risk_cfg_.max_loss_)) return RiskCheckResult::LOSS_TOO_LARGE;
 
         return RiskCheckResult::ALLOWED;

@@ -4,8 +4,8 @@
  * 用于计算复杂的特征值
  */
 
-#include "common/logging.h"
 #include "common/macros.h"
+#include "common/logging.h"
 
 using namespace Common;
 

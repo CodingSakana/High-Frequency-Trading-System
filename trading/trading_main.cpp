@@ -1,8 +1,9 @@
 #include <csignal>
+#include <limits>
 
-#include "market_data/market_data_consumer.h"
-#include "order_gw/order_gateway.h"
 #include "strategy/trade_engine.h"
+#include "order_gw/order_gateway.h"
+#include "market_data/market_data_consumer.h"
 
 #include "common/logging.h"
 
@@ -42,16 +43,31 @@ int main(int argc, char** argv) {
     // Parse and initialize the TradeEngineCfgHashMap above from the command line arguments.
     // [CLIP_1 THRESH_1 MAX_ORDER_SIZE_1 MAX_POS_1 MAX_LOSS_1] [CLIP_2 THRESH_2 MAX_ORDER_SIZE_2 MAX_POS_2 MAX_LOSS_2]
     // ...
-    size_t next_ticker_id = 0;
-    for (int i = 3; i < argc; i += 5, ++next_ticker_id) {
-        ticker_cfg.at(next_ticker_id) = {static_cast<Qty>(std::atoi(argv[i])),
-                                         std::atof(argv[i + 1]),
-                                         {
-                                            static_cast<Qty>(std::atoi(argv[i + 2])),
-                                            static_cast<Qty>(std::atoi(argv[i + 3])), 
-                                            std::atof(argv[i + 4])
-                                         }
-                                        };
+
+    /**
+     * struct TradeEngineCfg:
+     *      Qty clip_ = 0;
+     *      double threshold_ = 0;
+     *      RiskCfg risk_cfg_;
+     */
+    /**
+     * struct RiskCfg {
+     *      Qty max_order_size_ = 0;
+     *      Qty max_position_ = 0;
+     *      double max_loss_ = 0;
+     */
+    if (algo_type == AlgoType::MANUAL) {
+        for (TickerId tid = 0; tid < ME_MAX_TICKERS; ++tid) {
+            ticker_cfg.at(tid) = {1, 0.0, {std::numeric_limits<Qty>::max(), std::numeric_limits<Qty>::max(), std::numeric_limits<double>::lowest()}};
+        }
+    } else {
+        size_t next_ticker_id = 0;
+        for (int i = 3; i < argc; i += 5, ++next_ticker_id) {
+            ticker_cfg.at(next_ticker_id) = {static_cast<Qty>(std::atoi(argv[i])),
+                                             std::atof(argv[i + 1]),
+                                             {static_cast<Qty>(std::atoi(argv[i + 2])),
+                                              static_cast<Qty>(std::atoi(argv[i + 3])), std::atof(argv[i + 4])}};
+        }
     }
 
     logger->log("%:% %() % Starting Trade Engine...\n", __FILE__, __LINE__, __FUNCTION__,

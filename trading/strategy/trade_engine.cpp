@@ -31,7 +31,8 @@ TradeEngine::TradeEngine(Common::ClientId client_id, AlgoType algo_type, const T
     } else if (algo_type == AlgoType::TAKER) {
         taker_algo_ = new LiquidityTaker(&logger_, this, &feature_engine_, &order_manager_, ticker_cfg);
     } else if (algo_type == AlgoType::MANUAL) {
-        manual_algo = new ManualAlgorithm(&logger_, this, &feature_engine_, &order_manager_, ticker_cfg);
+        manual_algo = new ManualAlgorithm(&logger_, this, &feature_engine_, &order_manager_, ticker_cfg, 
+                                          &ticker_order_book_, &position_keeper_);
     }
 
     for (TickerId i = 0; i < ticker_cfg.size(); ++i) {
@@ -70,6 +71,9 @@ auto TradeEngine::sendClientRequest(const Exchange::MEClientRequest* client_requ
     auto next_write = outgoing_ogw_requests_->getNextToWriteTo();
     *next_write = std::move(*client_request);
     outgoing_ogw_requests_->updateWriteIndex();
+#ifdef PERF
+    TTT_MEASURE(T10_TradeEngine_LFQueue_write, logger_);
+#endif
 }
 
 /// Main loop for this thread - processes incoming client responses and market data updates which in turn may generate
@@ -79,6 +83,9 @@ auto TradeEngine::run() noexcept -> void {
     while (run_) {
         for (auto client_response = incoming_ogw_responses_->getNextToRead(); client_response;
              client_response = incoming_ogw_responses_->getNextToRead()) {
+#ifdef PERF
+            TTT_MEASURE(T9t_TradeEngine_LFQueue_read, logger_);
+#endif            
             logger_.log("%:% %() % Processing %\n", __FILE__, __LINE__, __FUNCTION__,
                         Common::getCurrentTimeStr(&time_str_), client_response->toString().c_str());
             onOrderUpdate(client_response);
@@ -88,6 +95,10 @@ auto TradeEngine::run() noexcept -> void {
 
         for (auto market_update = incoming_md_updates_->getNextToRead(); market_update;
              market_update = incoming_md_updates_->getNextToRead()) {
+#ifdef PERF
+            TTT_MEASURE(T9_TradeEngine_LFQueue_read, logger_);
+#endif            
+
             logger_.log("%:% %() % Processing %\n", __FILE__, __LINE__, __FUNCTION__,
                         Common::getCurrentTimeStr(&time_str_), market_update->toString().c_str());
             ASSERT(market_update->ticker_id_ < ticker_order_book_.size(),
@@ -107,13 +118,32 @@ auto TradeEngine::onOrderBookUpdate(TickerId ticker_id, Price price, Side side, 
                 Common::getCurrentTimeStr(&time_str_), ticker_id, Common::priceToString(price).c_str(),
                 Common::sideToString(side).c_str());
 
+    
     auto bbo = book->getBBO();
 
+#ifdef PERF
+    START_MEASURE(Trading_PositionKeeper_updateBBO);  
+#endif  
     position_keeper_.updateBBO(ticker_id, bbo);
+#ifdef PERF
+    END_MEASURE(Trading_PositionKeeper_updateBBO, logger_);
+#endif
 
+#ifdef PERF
+    START_MEASURE(Trading_FeatureEngine_onOrderBookUpdate);
+#endif
     feature_engine_.onOrderBookUpdate(ticker_id, price, side, book);
+#ifdef PERF
+    END_MEASURE(Trading_FeatureEngine_onOrderBookUpdate, logger_);
+#endif
 
+#ifdef PERF
+    START_MEASURE(Trading_TradeEngine_algoOnOrderBookUpdate_);
+#endif
     algoOnOrderBookUpdate_(ticker_id, price, side, book);
+#ifdef PERF
+    END_MEASURE(Trading_TradeEngine_algoOnOrderBookUpdate_, logger_);
+#endif
 }
 
 /// Process trade events - updates the  feature engine and informs the trading algorithm about the trade event.
@@ -121,9 +151,21 @@ auto TradeEngine::onTradeUpdate(const Exchange::MEMarketUpdate* market_update, M
     logger_.log("%:% %() % %\n", __FILE__, __LINE__, __FUNCTION__, Common::getCurrentTimeStr(&time_str_),
                 market_update->toString().c_str());
 
+#ifdef PERF
+    START_MEASURE(Trading_FeatureEngine_onTradeUpdate);
+#endif
     feature_engine_.onTradeUpdate(market_update, book);
+#ifdef PERF    
+    END_MEASURE(Trading_FeatureEngine_onTradeUpdate, logger_);
+#endif
 
+#ifdef PERF
+    START_MEASURE(Trading_TradeEngine_algoOnTradeUpdate_);
+#endif
     algoOnTradeUpdate_(market_update, book);
+#ifdef PERF    
+    END_MEASURE(Trading_TradeEngine_algoOnTradeUpdate_, logger_);
+#endif
 }
 
 /// Process client responses - updates the position keeper and informs the trading algorithm about the response.
@@ -132,9 +174,21 @@ auto TradeEngine::onOrderUpdate(const Exchange::MEClientResponse* client_respons
                 client_response->toString().c_str());
 
     if (UNLIKELY(client_response->type_ == Exchange::ClientResponseType::FILLED)) {
+#ifdef PERF        
+        START_MEASURE(Trading_PositionKeeper_addFill);
+#endif
         position_keeper_.addFill(client_response);
+#ifdef PERF        
+        END_MEASURE(Trading_PositionKeeper_addFill, logger_);
+#endif
     }
 
+#ifdef PERF    
+    START_MEASURE(Trading_TradeEngine_algoOnOrderUpdate_);
+#endif
     algoOnOrderUpdate_(client_response);
+#ifdef PERF    
+    END_MEASURE(Trading_TradeEngine_algoOnOrderUpdate_, logger_);
+#endif
 }
 } // namespace Trading

@@ -8,11 +8,11 @@
  * 为了时间复杂度为 O(1) 也有 3 个哈希表帮助定位 ME_ORDER 的位置
  */
 
-#include "common/logging.h"
-#include "common/mem_pool.h"
 #include "common/types.h"
-#include "market_data/market_update.h"
+#include "common/mem_pool.h"
+#include "common/logging.h"
 #include "order_server/client_response.h"
+#include "market_data/market_update.h"
 
 #include "me_order.h"
 

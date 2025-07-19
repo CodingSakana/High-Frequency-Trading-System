@@ -60,6 +60,9 @@ public:
             for (auto client_response = outgoing_responses_->getNextToRead();
                  outgoing_responses_->size() && client_response;
                  client_response = outgoing_responses_->getNextToRead()) {
+#ifdef PERF
+                TTT_MEASURE(T5t_OrderServer_LFQueue_read, logger_);
+#endif
                 auto& next_outgoing_seq_num = cid_next_outgoing_seq_num_[client_response->client_id_];
                 logger_.log("%:% %() % Processing cid:% seq:% %\n", __FILE__, __LINE__, __FUNCTION__,
                             Common::getCurrentTimeStr(&time_str_), client_response->client_id_, next_outgoing_seq_num,
@@ -67,13 +70,22 @@ public:
 
                 ASSERT(cid_tcp_socket_[client_response->client_id_] != nullptr,
                        "Dont have a TCPSocket for ClientId:" + std::to_string(client_response->client_id_));
-                
+
+#ifdef PERF
+                START_MEASURE(Exchange_TCPSocket_send);
+#endif
                 /* 拆两步发送成 OMClientResponse */
                 cid_tcp_socket_[client_response->client_id_]->send(&next_outgoing_seq_num,
                                                                    sizeof(next_outgoing_seq_num));
                 cid_tcp_socket_[client_response->client_id_]->send(client_response, sizeof(MEClientResponse));
+#ifdef PERF                
+                END_MEASURE(Exchange_TCPSocket_send, logger_);
+#endif
 
                 outgoing_responses_->updateReadIndex();
+#ifdef PERF
+                TTT_MEASURE(T6t_OrderServer_TCP_write, logger_);
+#endif
 
                 ++next_outgoing_seq_num;
             }
@@ -82,6 +94,9 @@ public:
 
     /// Read client request from the TCP receive buffer, check for sequence gaps and forward it to the FIFO sequencer.
     auto recvCallback(TCPSocket* socket, Nanos rx_time) noexcept {
+#ifdef PERF
+        TTT_MEASURE(T1_OrderServer_TCP_read, logger_);
+#endif
         logger_.log("%:% %() % Received socket:% len:% rx:%\n", __FILE__, __LINE__, __FUNCTION__,
                     Common::getCurrentTimeStr(&time_str_), socket->socket_fd_, socket->next_rcv_valid_index_, rx_time);
 
@@ -115,9 +130,14 @@ public:
                 }
 
                 ++next_exp_seq_num;
-
+#ifdef PERF
+                START_MEASURE(Exchange_FIFOSequencer_addClientRequest);
+#endif
                 // 这里是 TCP connection manager 向 sequencer 的交流接口
                 fifo_sequencer_.addClientRequest(rx_time, request->me_client_request_);
+#ifdef PERF
+                END_MEASURE(Exchange_FIFOSequencer_addClientRequest, logger_);
+#endif
             }
 
             /* 把前面已经处理过的数据直接覆盖，并修正 next_rcv_valid_index_ */
@@ -129,7 +149,13 @@ public:
     /// End of reading incoming messages across all the TCP connections, sequence and publish the client requests to the
     /// matching engine.
     auto recvFinishedCallback() noexcept {
+#ifdef PERF
+        START_MEASURE(Exchange_FIFOSequencer_sequenceAndPublish);
+#endif
         fifo_sequencer_.sequenceAndPublish();
+#ifdef PERF
+        END_MEASURE(Exchange_FIFOSequencer_sequenceAndPublish, logger_);
+#endif
     }
 
     /// Deleted default, copy & move constructors and assignment-operators.

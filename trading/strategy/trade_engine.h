@@ -2,25 +2,25 @@
 
 #include <functional>
 
-#include "common/lf_queue.h"
-#include "common/logging.h"
-#include "common/macros.h"
 #include "common/thread_utils.h"
 #include "common/time_utils.h"
+#include "common/lf_queue.h"
+#include "common/macros.h"
+#include "common/logging.h"
 
-#include "exchange/market_data/market_update.h"
 #include "exchange/order_server/client_request.h"
 #include "exchange/order_server/client_response.h"
+#include "exchange/market_data/market_update.h"
 
 #include "market_order_book.h"
 
 #include "feature_engine.h"
-#include "order_manager.h"
 #include "position_keeper.h"
+#include "order_manager.h"
 #include "risk_manager.h"
 
-#include "liquidity_taker.h"
 #include "market_maker.h"
+#include "liquidity_taker.h"
 #include "manual_algorithm.h"
 
 namespace Trading
