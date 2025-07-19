@@ -33,12 +33,24 @@ public:
         auto order_book = ticker_order_book_[client_request->ticker_id_];
         switch (client_request->type_) {
         case ClientRequestType::NEW: {
+#ifdef PERF
+            START_MEASURE(Exchange_MEOrderBook_add);
+#endif
             order_book->add(client_request->client_id_, client_request->order_id_, client_request->ticker_id_,
                             client_request->side_, client_request->price_, client_request->qty_);
+#ifdef PERF            
+            END_MEASURE(Exchange_MEOrderBook_add, logger_);
+#endif
         } break;
 
         case ClientRequestType::CANCEL: {
+#ifdef PERF
+            START_MEASURE(Exchange_MEOrderBook_cancel);
+#endif
             order_book->cancel(client_request->client_id_, client_request->order_id_, client_request->ticker_id_);
+#ifdef PERF            
+            END_MEASURE(Exchange_MEOrderBook_cancel, logger_);
+#endif        
         } break;
 
         default: {
@@ -54,6 +66,9 @@ public:
         auto next_write = outgoing_ogw_responses_->getNextToWriteTo();
         *next_write = std::move(*client_response);
         outgoing_ogw_responses_->updateWriteIndex();
+#ifdef PERF    
+        TTT_MEASURE(T4t_MatchingEngine_LFQueue_write, logger_);
+#endif
     }
 
     /// Write market data update to the lock free queue for the market data publisher to consume.
@@ -63,6 +78,9 @@ public:
         auto next_write = outgoing_md_updates_->getNextToWriteTo();
         *next_write = *market_update;
         outgoing_md_updates_->updateWriteIndex();
+#ifdef PERF
+        TTT_MEASURE(T4_MatchingEngine_LFQueue_write, logger_);
+#endif
     }
 
     /// Main loop for this thread - processes incoming client requests which in turn generates client responses and
@@ -72,9 +90,18 @@ public:
         while (run_) {
             const auto me_client_request = incoming_requests_->getNextToRead();
             if (LIKELY(me_client_request)) {
+#ifdef PERF
+                TTT_MEASURE(T3_MatchingEngine_LFQueue_read, logger_);
+#endif
                 logger_.log("%:% %() % Processing %\n", __FILE__, __LINE__, __FUNCTION__,
                             Common::getCurrentTimeStr(&time_str_), me_client_request->toString());
+#ifdef PERF                
+                START_MEASURE(Exchange_MatchingEngine_processClientRequest);
+#endif
                 processClientRequest(me_client_request);
+#ifdef PERF
+                END_MEASURE(Exchange_MatchingEngine_processClientRequest, logger_);
+#endif
                 incoming_requests_->updateReadIndex();
             }
         }

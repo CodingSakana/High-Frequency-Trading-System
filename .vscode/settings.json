@@ -62,6 +62,7 @@
         "typeinfo": "cpp",
         "variant": "cpp",
         "complex": "cpp",
-        "cinttypes": "cpp"
+        "cinttypes": "cpp",
+        "opt_mem_pool": "cpp"
     }
 }

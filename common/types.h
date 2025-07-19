@@ -188,5 +188,5 @@ struct TradeEngineCfg {
 };
 
 /// Hash map from TickerId -> TradeEngineCfg.
-typedef std::array<TradeEngineCfg, ME_MAX_TICKERS> TradeEngineCfgHashMap;
+using TradeEngineCfgHashMap = std::array<TradeEngineCfg, ME_MAX_TICKERS>;
 } // namespace Common

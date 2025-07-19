@@ -39,13 +39,9 @@ public:
 
     /// Deleted default, copy & move constructors and assignment-operators.
     LFQueue() = delete;
-
     LFQueue(const LFQueue&) = delete;
-
     LFQueue(const LFQueue&&) = delete;
-
     LFQueue& operator=(const LFQueue&) = delete;
-
     LFQueue& operator=(const LFQueue&&) = delete;
 
 private:
@@ -53,9 +49,9 @@ private:
     std::vector<T> store_;
 
     /// Atomic trackers for next index to write new data to and read new data from.
-    std::atomic<size_t> next_write_index_ = {0};
-    std::atomic<size_t> next_read_index_ = {0};
+    std::atomic<size_t> next_write_index_{0};
+    std::atomic<size_t> next_read_index_{0};
 
-    std::atomic<size_t> num_elements_ = {0};
+    std::atomic<size_t> num_elements_{0};
 };
 } // namespace Common

@@ -3,6 +3,8 @@
 #include <chrono>
 #include <ctime>
 #include <string>
+#include <format>
+#include <array>
 
 namespace Common
 {
@@ -20,17 +22,39 @@ inline auto getCurrentNanos() noexcept {
         .count();
 }
 
-/** 返回当前时间的字符串表示，用于人类可读的时间显示 */
+#ifdef PERF
+/// 返回带纳秒的可读时间字符串，格式：YYYY-MM-DD HH:MM:SS.nnnnnnnnn
 inline auto& getCurrentTimeStr(std::string* time_str) {
-    const auto time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-    /**
-     * 等价于
-     * time_str->clear();
-     * time_str->append(ctime(&time));
-     */
-    time_str->assign(ctime(&time));
-    /* 这里用 .at() 是因为 at() 有边界检查*/
-    if (!time_str->empty()) time_str->at(time_str->length() - 1) = '\0';
+    using namespace std::chrono;
+    auto now = system_clock::now();
+
+    // 拆分秒和纳秒
+    auto secs = system_clock::to_time_t(now);
+    long nanos = static_cast<long>(duration_cast<nanoseconds>(now.time_since_epoch()).count() % NANOS_TO_SECS);
+
+    // 线程安全转换
+    std::tm tm{};
+    localtime_r(&secs, &tm);
+
+    // 格式化：{:%Y-%m-%d %H:%M:%S} 来自 <format>
+    std::string s = std::format("{:%H:%M:%S}.{:09}", tm, nanos);
+    time_str->assign(s);
     return *time_str;
 }
+#else
+/// 返回秒级可读时间字符串，格式：YYYY-MM-DD HH:MM:SS
+inline auto& getCurrentTimeStr(std::string* time_str) {
+    using namespace std::chrono;
+    auto now = system_clock::now();
+    auto secs = system_clock::to_time_t(now);
+
+    std::tm tm{};
+    localtime_r(&secs, &tm);
+
+    // 不带换行、线程安全
+    std::string s = std::format("{:%Y-%m-%d %H:%M:%S}", tm);
+    time_str->assign(s);
+    return *time_str;
+}
+#endif
 } // namespace Common
