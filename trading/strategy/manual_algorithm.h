@@ -72,61 +72,84 @@ private:
     /* -------- CLI 主循环 -------- */
     void cliLoop() {
         std::string line;
+
         while (keep_running_.load()) {
             if (!std::getline(std::cin, line)) {
-                // 仅清除 EOF 标志，不退出
+                // 只是遇到 EOF；清标志并稍作等待，再继续读
                 std::cin.clear();
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
                 continue;
             }
+
             std::istringstream iss(line);
             std::string cmd;
             iss >> cmd;
-            if (cmd == "BUY" || cmd == "SELL" || cmd == "B" || cmd == "S") {
+
+            // 统一转成大写
+            std::transform(cmd.begin(), cmd.end(), cmd.begin(), ::toupper);
+
+            if (cmd == "BUY" || cmd == "B" || cmd == "SELL" || cmd == "S") {
                 TickerId ticker;
                 Price px;
                 Qty qty;
                 iss >> ticker >> px >> qty;
-                // Side side = (cmd == "BUY") ? Side::BUY : Side::SELL;
+
                 Side oppSide = (cmd == "BUY" || cmd == "B") ? Side::SELL : Side::BUY;
-                auto bid_order = order_manager_->getOMOrderSideHashMap(ticker)->at(sideToIndex(oppSide));
+                auto order = order_manager_->getOMOrderSideHashMap(ticker)->at(sideToIndex(oppSide));
+
                 if (oppSide == Side::SELL)
-                    order_manager_->moveOrders(ticker, px, bid_order.price_, qty);
+                /* px 是 buy 的价格；bid_order.price_ 是 sell 的原来的价格 */
+                    order_manager_->moveOrders(ticker, px, order.price_, qty);
                 else
-                    order_manager_->moveOrders(ticker, bid_order.price_, px, qty);
+                    order_manager_->moveOrders(ticker, order.price_, px, qty);
+            } else if (cmd == "BUYANDSELL" || cmd == "BAS") {
+                TickerId ticker;
+                Price bitPrice, askPrice;
+                Qty qty;
+                iss >> ticker >> bitPrice >> askPrice >> qty;
+
+                order_manager_->moveOrders(ticker, bitPrice, askPrice, qty);
             } else if (cmd == "CANCEL" || cmd == "C") {
                 TickerId ticker;
                 std::string sideStr;
                 iss >> ticker >> sideStr;
-                Side oppSide = (sideStr == "BUY" || cmd == "B") ? Side::SELL : Side::BUY;
+                std::transform(sideStr.begin(), sideStr.end(), sideStr.begin(), ::toupper);
+
+                Side oppSide = (sideStr == "BUY" || sideStr == "B") ? Side::SELL : Side::BUY;
                 auto bid_order = order_manager_->getOMOrderSideHashMap(ticker)->at(sideToIndex(oppSide));
+
                 if (oppSide == Side::BUY)
-                    order_manager_->moveOrders(ticker, bid_order.price_, Price_INVALID, 0); // 撤单
+                    order_manager_->moveOrders(ticker, bid_order.price_, Price_INVALID, 0); // 撤买单
                 else
-                    order_manager_->moveOrders(ticker, Price_INVALID, bid_order.price_, 0); // 撤单
+                    order_manager_->moveOrders(ticker, Price_INVALID, bid_order.price_, 0); // 撤卖单
+
             } else if (cmd == "FLAT") {
                 flatAll();
+
             } else if (cmd == "PNL") {
                 getPnl();
+
             } else if (cmd == "BOOK" || cmd == "O") {
                 getBook();
+
             } else if (cmd == "MARKET" || cmd == "M") {
                 getMarket();
+
             } else if (cmd == "HELP") {
                 std::cout << "Available commands:\n"
-                          << "  BUY <ticker> <price> <qty> - Place a buy order\n"
-                          << "  SELL <ticker> <price> <qty> - Place a sell order\n"
-                          << "  CANCEL <ticker> <side> - Cancel an order on the specified side\n"
-                          << "  FLAT - Cancel all orders\n"
-                          << "  PNL - Get current PnL\n"
-                          << "  BOOK - Get current orders book\n"
-                          << "  MARKET - Get current market data\n"
-                          << "  HELP - Show this help message\n";
+                          << "  BUY <ticker> <price> <qty>   - Place a buy order\n"
+                          << "  SELL <ticker> <price> <qty>  - Place a sell order\n"
+                          << "  CANCEL <ticker> <side>       - Cancel orders on the specified side\n"
+                          << "  FLAT                         - Cancel all orders\n"
+                          << "  PNL                          - Show current PnL\n"
+                          << "  BOOK                         - Show current order book\n"
+                          << "  MARKET                       - Show current market data\n"
+                          << "  HELP                         - Show this help message\n";
+
             } else {
-                std::cout << "Unknown command: " << cmd << "\n";
-                std::cout << "Type 'HELP' for available commands.\n";
-                std::cin.clear();
-                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                std::cout << "Unknown command: " << cmd << "\n"
+                          << "Type 'HELP' for available commands.\n";
+                // 不要 ignore()，否则下一个输入会被吞掉
             }
         }
     }
@@ -144,9 +167,12 @@ private:
     auto getBook() const noexcept -> void {
         std::cout << "====== Current Orders ======\n";
         for (TickerId tid = 0; tid < ticker_cfg_.size(); ++tid) {
-            std::cout << "Ticker: " << tid << "\n";
             OMOrder buyOrder = order_manager_->getOMOrderSideHashMap(tid)->at(sideToIndex(Side::BUY));
             OMOrder sellOrder = order_manager_->getOMOrderSideHashMap(tid)->at(sideToIndex(Side::SELL));
+            if (buyOrder.ticker_id_ == TickerId_INVALID && sellOrder.ticker_id_ == TickerId_INVALID) {
+                continue; // No orders for this ticker
+            }
+            std::cout << "Ticker: " << tid << "\n";
             std::cout << buyOrder.toString() << "\n" << sellOrder.toString() << "\n";
         }
     }
@@ -155,6 +181,9 @@ private:
         std::cout << "====== Market Data ======\n";
         for (TickerId tid = 0; tid < ticker_cfg_.size(); ++tid) {
             const auto bbo = ticker_order_book_->at(tid)->getBBO();
+            if (bbo->ask_price_ == Price_INVALID && bbo->bid_price_ == Price_INVALID) {
+                continue; // No market data for this ticker
+            }
             std::cout << "Ticker: " << tid << "\n"
                       << "Bid: " << Common::priceToString(bbo->bid_price_) << " Qty: " << bbo->bid_qty_ << "\n"
                       << "Ask: " << Common::priceToString(bbo->ask_price_) << " Qty: " << bbo->ask_qty_ << "\n";

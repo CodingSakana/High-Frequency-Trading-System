@@ -24,8 +24,9 @@ MEOrderBook::~MEOrderBook() {
 /// generate client responses and market updates for the match. It will update the passive order (bid_itr) based on the
 /// match and possibly remove it if fully matched. It will return remaining quantity on the aggressive order in the
 /// leaves_qty parameter.
+/** 这个是由上层的 checkForMatch 调用 */
 auto MEOrderBook::match(TickerId ticker_id, ClientId client_id, Side side, OrderId client_order_id,
-                        OrderId new_market_order_id, MEOrder* itr, Qty* leaves_qty) noexcept {
+                        OrderId new_market_order_id, MEOrder* itr /* 可以被撮合的挂着的被动订单 */, Qty* leaves_qty) noexcept {
     const auto order = itr;
     const auto order_qty = order->qty_;
     const auto fill_qty = std::min(*leaves_qty, order_qty);
@@ -57,10 +58,12 @@ auto MEOrderBook::match(TickerId ticker_id, ClientId client_id, Side side, Order
                         order->qty_};
     matching_engine_->sendClientResponse(&client_response_);
 
+    /* TRADE：仅通知“发生了一笔成交”，用于成交记录和分析 */
     market_update_ = {MarketUpdateType::TRADE, OrderId_INVALID, ticker_id, side, itr->price_, fill_qty,
                       Priority_INVALID};
     matching_engine_->sendMarketUpdate(&market_update_);
 
+    /* CANCEL/MODIFY：同步“挂单的状态变化”，用于更新订单簿 */
     if (!order->qty_) {
         market_update_ = {
             MarketUpdateType::CANCEL, order->market_order_id_, ticker_id, order->side_, order->price_, order_qty,
@@ -79,13 +82,16 @@ auto MEOrderBook::match(TickerId ticker_id, ClientId client_id, Side side, Order
 /// Check if a new order with the provided attributes would match against existing passive orders on the other side of
 /// the order book. This will call the match() method to perform the match if there is a match to be made and return the
 /// quantity remaining if any on this new order.
+/* 调用 match */
 auto MEOrderBook::checkForMatch(ClientId client_id, OrderId client_order_id, TickerId ticker_id, Side side, Price price,
                                 Qty qty, Qty new_market_order_id) noexcept {
     auto leaves_qty = qty;
 
     if (side == Side::BUY) {
+        /* 检查还有剩下的数量吗？ && 市场中 asks 的链表是空的吗 */
         while (leaves_qty && asks_by_price_) {
             const auto ask_itr = asks_by_price_->first_me_order_;
+            // 买价小于卖价直接 break
             if (LIKELY(price < ask_itr->price_)) {
                 break;
             }

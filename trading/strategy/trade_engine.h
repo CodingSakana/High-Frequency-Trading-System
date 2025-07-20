@@ -113,7 +113,7 @@ private:
     Exchange::ClientResponseLFQueue* incoming_ogw_responses_ = nullptr;
     Exchange::MEMarketUpdateLFQueue* incoming_md_updates_ = nullptr;
 
-    Nanos last_event_time_ = 0;
+    Nanos last_event_time_ = 0; // Last time an event was processed by this trade engine.
     volatile bool run_ = false;
 
     std::string time_str_;

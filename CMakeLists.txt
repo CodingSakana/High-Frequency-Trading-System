@@ -2,14 +2,9 @@ cmake_minimum_required(VERSION 3.0)
 
 project(LowLatencyApp)
 
-option(PERF_BUILD "Enable PERF macro" OFF)
-if(PERF_BUILD)
-  add_compile_definitions(PERF)
-endif()
-
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_COMPILER g++)
-set(CMAKE_CXX_FLAGS "-std=c++20 -Wall -Wextra -Werror -Wpedantic")
+set(CMAKE_CXX_FLAGS "-std=c++20 -O3 -Wall -Wextra -Werror -Wpedantic")
 set(CMAKE_VERBOSE_MAKEFILE on)
 
 add_subdirectory(common)

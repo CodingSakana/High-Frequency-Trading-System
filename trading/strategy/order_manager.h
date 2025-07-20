@@ -64,16 +64,16 @@ public:
     auto moveOrder(OMOrder* order, TickerId ticker_id, Price price, Side side, Qty qty) noexcept {
         switch (order->order_state_) {
         case OMOrderState::LIVE: {
-            if (order->price_ != price) {
+            if (price == Price_INVALID) {
 #ifdef PERF
                 START_MEASURE(Trading_OrderManager_cancelOrder);
 #endif
                 cancelOrder(order);
 #ifdef PERF
                 END_MEASURE(Trading_OrderManager_cancelOrder, (*logger_));
-#endif
-            } else {
-            // 同价改量：先做风控
+#endif   
+            } else if (order->qty_ != qty || order->price_ != price) {
+            // 同价改量 || 同价改量：先做风控
 #ifdef PERF
                 START_MEASURE(Trading_RiskManager_checkPreTradeRisk);
 #endif

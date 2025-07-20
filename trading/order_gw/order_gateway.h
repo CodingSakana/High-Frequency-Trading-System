@@ -8,6 +8,16 @@
  * 存入 LFQueue 等待 TE 来取
  */
 
+/**
+ * 调用链：
+ * run() 主循环
+ *  tcp_socket_.sendAndRecv() 接收与发送数据
+ *      触发 tcp_socket 的回调函数 OrderGateway::recvCallback(TCPSocket* socket, Nanos rx_time)
+ *          写入 LFQueue incoming_responses_
+ *  for 循环获取 LFQueue outgoing_requests_ 的数据
+ *      send() 发送到 socket 的发送缓存中
+ */
+
 #include <functional>
 
 #include "common/thread_utils.h"

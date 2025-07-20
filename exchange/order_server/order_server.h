@@ -5,6 +5,26 @@
  * 控制 sequencer 和 TCP connection manager
  */
 
+/**
+ * 调用链
+ * run() 循环：
+ *  tcp_server_.poll() 轮询 TCP 连接
+ *  tcp_server_.sendAndRecv() 接收数据
+ *      for 循环调用每个 receive_sockets_ 的 TCPSocket::sendAndRecv()：
+ *          recvCallback(TCPSocket* socket, Nanos rx_time) 处理接收到的数据
+ *              for 循环处理接收到的 OMClientRequest：
+ *                  if (第一次收到这个 ClientId 的请求) 记录这个 socket
+ *                  fifo_sequencer_.sequenceAndPublish() 把请求放入 FIFO sequencer 的 array pending_client_requests_ 中
+ *      if (有读到讯息) recv_finished_callback_()
+ *          fifo_sequencer_.sequenceAndPublish()
+ *              按照事件排序 pending_client_requests_ 中的请求
+ *              for 循环排序过的请求写在 LFQueue incoming_requests_ 上等待 Matching Engine 来取
+ *      for 循环调用每个 send_sockets_ 的 TCPSocket::sendAndRecv()：
+ *          把该 socket.outbound_data_ 里的bytes 用 ::send() 发送出去
+ *  for 循环读取 outgoing_responses_ 的数据
+ *      分两次 send() 封装发送到每个 ClientId 的 TCPSocket 上的 outbound_data_ 缓冲区
+ */
+
 #include <functional>
 
 #include "common/macros.h"

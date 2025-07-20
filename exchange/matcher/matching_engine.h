@@ -4,6 +4,23 @@
  * ME 主文件
  */
 
+/**
+ * 调用链：
+ * run() 主循环 ->
+ *  processClientRequest() 处理来自 order server 的请求
+ *      MEOrderBook::add() 添加订单
+ *          MEOrderBook::checkForMatch() 检查是否有可以撮合的被动订单
+ *              MEOrderBook::match() 撮合订单
+ *                  MEOrderBook::sendClientResponse() 写入 LFQueue outgoing_ogw_responses_ 等待 order server 取
+ *                  MEOrderBook::sendMarketUpdate() 写入 LFQueue outgoing_md_updates_ 等待 MDP 取
+ *          if (经过撮合还有剩) MEOrderBook::addOrder() 添加订单到订单簿
+ *          MEOrderBook::sendMarketUpdate() 发送市场数据更新给市场数据发布者
+ *      MEOrderBook::cancel() 取消订单
+ *          MEOrderBook::removeOrder() 删除订单
+ *          MEOrderBook::sendMarketUpdate() 写入 LFQueue outgoing_md_updates_ 等待 MDP 取
+ *          MEOrderBook::sendClientResponse() 写入 LFQueue outgoing_ogw_responses_ 等待 order server 取
+ */
+
 #include "common/thread_utils.h"
 #include "common/lf_queue.h"
 #include "common/macros.h"
@@ -29,6 +46,7 @@ public:
     auto stop() -> void;
 
     /// Called to process a client request read from the lock free queue sent by the order server.
+    /* rnu() 调用的第一个函数，目的是处理从 order server::LFQueue 到来的 request */
     auto processClientRequest(const MEClientRequest* client_request) noexcept {
         auto order_book = ticker_order_book_[client_request->ticker_id_];
         switch (client_request->type_) {
@@ -36,6 +54,7 @@ public:
 #ifdef PERF
             START_MEASURE(Exchange_MEOrderBook_add);
 #endif
+            /* 这里会调用 checkForMatch 检查是否有可以撮合的被动订单 */
             order_book->add(client_request->client_id_, client_request->order_id_, client_request->ticker_id_,
                             client_request->side_, client_request->price_, client_request->qty_);
 #ifdef PERF            
@@ -59,6 +78,7 @@ public:
         }
     }
 
+    /* 被 match 调用 */
     /// Write client responses to the lock free queue for the order server to consume.
     auto sendClientResponse(const MEClientResponse* client_response) noexcept {
         logger_.log("%:% %() % Sending %\n", __FILE__, __LINE__, __FUNCTION__, Common::getCurrentTimeStr(&time_str_),
@@ -71,6 +91,7 @@ public:
 #endif
     }
 
+    /* 被 match 调用 */
     /// Write market data update to the lock free queue for the market data publisher to consume.
     auto sendMarketUpdate(const MEMarketUpdate* market_update) noexcept {
         logger_.log("%:% %() % Sending %\n", __FILE__, __LINE__, __FUNCTION__, Common::getCurrentTimeStr(&time_str_),

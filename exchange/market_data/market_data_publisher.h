@@ -3,6 +3,7 @@
 /**
  * 这个是 Market Data Publisher 的主文件
  * 从这里面创建了 snapshot_synthesizer
+ * 并控制 snapshot_synthesizer 的开始与结束
  */
 
 #include <functional>

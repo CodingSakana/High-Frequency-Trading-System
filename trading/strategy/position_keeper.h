@@ -19,11 +19,13 @@ namespace Trading
 {
 /// PositionInfo tracks the position, pnl (realized and unrealized) and volume for a single trading instrument.
 struct PositionInfo {
-    int32_t position_ = 0;
-    double real_pnl_ = 0, unreal_pnl_ = 0, total_pnl_ = 0;
-    std::array<double, sideToIndex(Side::MAX) + 1> open_vwap_;
-    Qty volume_ = 0;
-    const BBO* bbo_ = nullptr;
+    int32_t position_ = 0;  // 正数表示多头持仓，负数表示空头持仓。每次开仓/平仓都会增加或减少这个值，用来跟踪你手上还剩多少合约。
+    double real_pnl_ = 0;   // 当平掉一部分或全部仓位时，按「平仓价格 − 成本价格」× 数量计算出的那部分盈亏，就累加到这里。
+    double unreal_pnl_ = 0; // 反映如果现在平仓能拿到多少利润／亏损。
+    double total_pnl_ = 0;  // 表示如果此刻全部平仓，你的总盈亏。
+    std::array<double, sideToIndex(Side::MAX) + 1> open_vwap_;  // 用来维护各个方向（通常是多头和空头）的开仓加权平均价（VWAP）。
+    Qty volume_ = 0;        // 对应累计开仓的总数量，用作 VWAP 分母
+    const BBO* bbo_ = nullptr;  // 指向最新的 Best-Bid-Offer 数据 (BBO)。用来取当前买卖档的最优价。
 
     auto toString() const {
         std::stringstream ss;

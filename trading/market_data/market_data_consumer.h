@@ -6,6 +6,54 @@
  * 最终结果是把更新的信息写进 incoming_md_updates_ 等待 TE 来取
  */
 
+/**
+ * 调用链：
+ *  run() 循环
+ *      incremental_mcast_socket_.sendAndRecv()
+ *          读到信息会调用 recvCallback()
+ *              if (正常情况下（没有失序）) 简单的写入 LFQueue incoming_md_updates_ 等待 TE 来取即可
+ *              if (失序情况下)
+ *                  if (未开始恢复)
+ *                      调用 startSnapshotSync() 清空 snapshot 和 update 的 Queuedmessage，初始化 snapshot_mcast_socket_ 并注册进组播组
+ *                  调用 queueMessage()
+ *                      if (是 snapshot) 加入 snapshot_queued_msgs_
+ *                      if (是 incremental) 加入 incremental_queued_msgs_
+ *                      调用 checkSnapshotSync()
+ *                          if （snapshot_queued_msgs_ 为空）直接 return
+ *                          创建一个 vector final_events 收集快照数据（排除 START/END）容器和后续增量更新的容器
+ *                          for 循环：
+ *                              将快照数据 push_back 进 finnal_events
+ *                          if (最后一个快照数据不是 SNAPSHOT_END) 直接 return
+ *                          (此时已经有完整快照数据)
+ *                          for 循环：
+ *                              将增量数据 push_back 进 final_events
+ *                          for 循环：
+ *                              将 final_events 中的每个数据写入 incoming_md_updates_ 等待 TE 来取
+ *                          清空两个 queued_msgs_ 
+ *                          退订 snapshot_mcast_socket_ 的组播
+ *                              close(snapshot_mcast_socket_);
+ *      if (snapshot_mcast_socket_ 已经初始化) snapshot_mcast_socket_.sendAndRecv()
+ *              if (没在恢复中) return
+ *              if (失序情况下)
+ *                  调用 queueMessage()
+ *                      if (是 snapshot) 加入 snapshot_queued_msgs_
+ *                      if (是 incremental) 加入 incremental_queued_msgs_
+ *                      调用 checkSnapshotSync()
+ *                          if （snapshot_queued_msgs_ 为空）直接 return
+ *                          创建一个 vector final_events 收集快照数据（排除 START/END）容器和后续增量更新的容器
+ *                          for 循环：
+ *                              将快照数据 push_back 进 finnal_events
+ *                          if (最后一个快照数据不是 SNAPSHOT_END) 直接 return
+ *                          (此时已经有完整快照数据)
+ *                          for 循环：
+ *                              将增量数据 push_back 进 final_events
+ *                          for 循环：
+ *                              将 final_events 中的每个数据写入 incoming_md_updates_ 等待 TE 来取
+ *                          清空两个 queued_msgs_ 
+ *                          退订 snapshot_mcast_socket_ 的组播
+ *                              close(snapshot_mcast_socket_);
+ */
+
 #include <functional>
 #include <map>
 

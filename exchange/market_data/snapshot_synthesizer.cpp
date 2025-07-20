@@ -91,6 +91,7 @@ auto SnapshotSynthesizer::publishSnapshot() {
                 start_market_update.toString());
     snapshot_socket_.send(&start_market_update, sizeof(MDPMarketUpdate));
 
+    /* 这里先发送每一个 Ticker 的 CLEAR 报文，然后再发送每一个 order */
     // Publish order information for each order in the limit order book for each instrument.
     for (size_t ticker_id = 0; ticker_id < ticker_orders_.size(); ++ticker_id) {
         const auto& orders = ticker_orders_.at(ticker_id);
@@ -120,6 +121,7 @@ auto SnapshotSynthesizer::publishSnapshot() {
 
     // The snapshot cycle ends with a SNAPSHOT_END message and order_id_ contains the last sequence number from the
     // incremental market data stream used to build this snapshot.
+    /* 发送 END message 标记快照结束 */
     const MDPMarketUpdate end_market_update{snapshot_size++, {MarketUpdateType::SNAPSHOT_END, last_inc_seq_num_}};
     logger_.log("%:% %() % %\n", __FILE__, __LINE__, __FUNCTION__, getCurrentTimeStr(&time_str_),
                 end_market_update.toString());
@@ -135,7 +137,7 @@ auto SnapshotSynthesizer::publishSnapshot() {
 void SnapshotSynthesizer::run() {
     logger_.log("%:% %() %\n", __FILE__, __LINE__, __FUNCTION__, getCurrentTimeStr(&time_str_));
     while (run_) {
-        /* 从 LFQueue 取 MDPMarketUpdate */
+        /* 从 LFQueue 取 MDPMarketUpdate，LFQueue 来源于 market data publisher 创建的，用途是 MDP 至 synthesizer 的通讯 */
         for (auto market_update = snapshot_md_updates_->getNextToRead(); snapshot_md_updates_->size() && market_update;
              market_update = snapshot_md_updates_->getNextToRead()) {
             logger_.log("%:% %() % Processing %\n", __FILE__, __LINE__, __FUNCTION__, getCurrentTimeStr(&time_str_),

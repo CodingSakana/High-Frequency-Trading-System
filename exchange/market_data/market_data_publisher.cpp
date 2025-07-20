@@ -5,6 +5,15 @@
  * 从这里面创建了 SnapshotSynthesizer 和 McastSocket
  */
 
+/**
+ * 调用链：
+ * run() ->
+ *  for 循环获取 LFQueue outgoing_md_updates_ 的数据
+ *      封装并发送到 incremental_socket_ ->
+ *      将数据转发到 snapshot_synthesizer_
+ *  调用 incremental_socket_.sendAndRecv() 发送数据到组播地址
+ */
+
 namespace Exchange
 {
 MarketDataPublisher::MarketDataPublisher(MEMarketUpdateLFQueue* market_updates, const std::string& iface,
@@ -47,7 +56,7 @@ auto MarketDataPublisher::run() noexcept -> void {
 #endif
 
             /**
-             * 这里通过使用 LFQueue 与 snapshot_synthesizer 进行通信的
+             * 这里通过使用 LFQueue 与 snapshot_synthesizer 进行通信
              * 然后透过 snapshot_synthesizer 发布完整快照
              */
             // Forward this incremental market data update the snapshot synthesizer.

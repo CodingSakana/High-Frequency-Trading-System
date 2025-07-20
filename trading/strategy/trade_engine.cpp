@@ -1,5 +1,32 @@
 #include "trade_engine.h"
 
+/**
+ * Trading Engine 主文件
+ * 调用链：
+ * run() 主循环
+ *  for 循环获取 LFQueue incoming_ogw_responses_ 的数据
+ *      onOrderUpdate() 处理 client response
+ *          if (回应类型为 FILLED) position_keeper_.addFill() 更新持仓
+ *              先找到 ticker_id 对应的 PositionInfo
+ *              后调用 PositionInfo::addFill() 更新持仓信息，包括持仓、未/已 实现盈亏、总盈亏
+ *          algoOnOrderUpdate_() 通知 algo 处理订单更新
+ *              if (是 MarketMaker 或 LiquidityTaker) 调用对应的 onOrderUpdate() 函数
+ *                  调用 OrderManager::onOrderUpdate() 更新订单管理器中的订单状态
+ *                      根据 client_response 的类型更新本地 Order 的状态
+ *  for 循环获取 LFQueue incoming_md_updates_ 的数据
+ *      通过哈希表获取对应的 MarketOrderBook 并调用 MarketOrderBook::onMarketUpdate() 处理市场数据更新
+ *          根据市场数据更新的类型（ADD、MODIFY、CANCEL、TRADE、CLEAR）进行相应的处理，
+ *              如 addOrder()、removeOrder() 等
+ *              如果是 TRADE 类型，则调用 TradeEngine::onTradeUpdate()
+ *                  feature_engine_.onTradeUpdate() 更新特征引擎（agg_trade_qty_ratio_）
+ *                  algoOnTradeUpdate_() 通知 algo 调用对应的 onTradeUpdate() 函数
+ *          MarketOrderBook::updateBBO() 透过 market_order_book 的信息更新 BBO（Best Bid and Offer）
+ *          trade_engine_->onOrderBookUpdate() 通知 algo 处理订单簿更新
+ *              posision_keeper_.updateBBO() 更新持仓信息中的 BBO
+ *              feature_engine_.onOrderBookUpdate() 更新特征引擎（mkt_price_）
+ *              algoOnOrderBookUpdate_() 通知 algo 调用对应的 onOrderBookUpdate() 函数
+ */
+
 namespace Trading
 {
 TradeEngine::TradeEngine(Common::ClientId client_id, AlgoType algo_type, const TradeEngineCfgHashMap& ticker_cfg,
@@ -81,6 +108,7 @@ auto TradeEngine::sendClientRequest(const Exchange::MEClientRequest* client_requ
 auto TradeEngine::run() noexcept -> void {
     logger_.log("%:% %() %\n", __FILE__, __LINE__, __FUNCTION__, Common::getCurrentTimeStr(&time_str_));
     while (run_) {
+        // 获取 client_responses
         for (auto client_response = incoming_ogw_responses_->getNextToRead(); client_response;
              client_response = incoming_ogw_responses_->getNextToRead()) {
 #ifdef PERF
@@ -174,7 +202,7 @@ auto TradeEngine::onOrderUpdate(const Exchange::MEClientResponse* client_respons
                 client_response->toString().c_str());
 
     if (UNLIKELY(client_response->type_ == Exchange::ClientResponseType::FILLED)) {
-#ifdef PERF        
+#ifdef PERF
         START_MEASURE(Trading_PositionKeeper_addFill);
 #endif
         position_keeper_.addFill(client_response);

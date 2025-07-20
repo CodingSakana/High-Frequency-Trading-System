@@ -3,8 +3,10 @@
 namespace Common
 {
 /// Add and remove socket file descriptors to and from the EPOLL list.
-auto TCPServer::addToEpollList(TCPSocket* socket) {
+auto TCPServer::addToEpollList(TCPSocket* socket) -> bool{
+    // EPOLLET： 只有“状态由无数据→有数据”这一次变化时才通知
     epoll_event ev{EPOLLET | EPOLLIN, {reinterpret_cast<void*>(socket)}};
+    // 成功返回 0，失败返回 -1
     return !epoll_ctl(epoll_fd_, EPOLL_CTL_ADD, socket->socket_fd_, &ev);
 }
 

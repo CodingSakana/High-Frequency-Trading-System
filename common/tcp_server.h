@@ -19,7 +19,7 @@ struct TCPServer {
 
 private:
     /// Add and remove socket file descriptors to and from the EPOLL list.
-    auto addToEpollList(TCPSocket* socket);
+    auto addToEpollList(TCPSocket* socket) -> bool;
 
 public:
     /// Socket on which this server is listening for new connections on.

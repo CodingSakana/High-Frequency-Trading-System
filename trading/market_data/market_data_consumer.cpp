@@ -32,7 +32,7 @@ auto MarketDataConsumer::run() noexcept -> void {
     logger_.log("%:% %() %\n", __FILE__, __LINE__, __FUNCTION__, Common::getCurrentTimeStr(&time_str_));
     while (run_) {
         incremental_mcast_socket_.sendAndRecv();
-        snapshot_mcast_socket_.sendAndRecv();
+        if(snapshot_mcast_socket_.socket_fd_ != -1) snapshot_mcast_socket_.sendAndRecv();
     }
 }
 
@@ -70,20 +70,20 @@ auto MarketDataConsumer::checkSnapshotSync() -> void {
 
     auto have_complete_snapshot = true;
     size_t next_snapshot_seq = 0;
-    for (auto& [seq, upd] : snapshot_queued_msgs_) {
+    for (auto& [seq, msgs] : snapshot_queued_msgs_) {
         logger_.log("%:% %() % % => %\n", __FILE__, __LINE__, __FUNCTION__, Common::getCurrentTimeStr(&time_str_), seq,
-                    upd.toString());
+                    msgs.toString());
         /* 如果中间有间隔（seq != next_snapshot_seq），说明快照不完整，丢弃所有快照消息，回头等下一轮重发 */
         if (seq != next_snapshot_seq) {
             have_complete_snapshot = false;
             logger_.log("%:% %() % Detected gap in snapshot stream expected:% found:% %.\n", __FILE__, __LINE__,
-                        __FUNCTION__, Common::getCurrentTimeStr(&time_str_), next_snapshot_seq, seq, upd.toString());
+                        __FUNCTION__, Common::getCurrentTimeStr(&time_str_), next_snapshot_seq, seq, msgs.toString());
             break;
         }
 
-        if (upd.type_ != Exchange::MarketUpdateType::SNAPSHOT_START &&
-            upd.type_ != Exchange::MarketUpdateType::SNAPSHOT_END)
-            final_events.push_back(upd);
+        if (msgs.type_ != Exchange::MarketUpdateType::SNAPSHOT_START &&
+            msgs.type_ != Exchange::MarketUpdateType::SNAPSHOT_END)
+            final_events.push_back(msgs);
 
         ++next_snapshot_seq;
     }
@@ -164,7 +164,6 @@ auto MarketDataConsumer::checkSnapshotSync() -> void {
 
     // 退订快照组播
     snapshot_mcast_socket_.leave(snapshot_ip_, snapshot_port_);
-    ;
 }
 
 /* 这个只有 in_recovery 才会调用到 */
@@ -236,8 +235,8 @@ auto MarketDataConsumer::recvCallback(McastSocket* socket) noexcept -> void {
                                 __LINE__, __FUNCTION__, Common::getCurrentTimeStr(&time_str_),
                                 (is_snapshot ? "snapshot" : "incremental"), next_exp_inc_seq_num_, request->seq_num_);
 
-                    /* 这个主要是 clear 掉两个 QueuedMarketUpdates，然后初始化 snapshot socket 并注册进 snapshot
-                     * 的组播组中 */
+                    /* 这个主要是 clear 掉两个 QueuedMarketUpdates，一个来自 incremental socket，另一个来自 snapthot
+                     * socket，然后初始化 snapshot socket 并注册进 snapshot 的组播组中 */
                     /* 所以我们需要 already_in_recovery */
                     startSnapshotSync();
                 }
