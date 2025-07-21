@@ -1,17 +1,20 @@
 #!/bin/bash
 
-# TODO - point these to the correct binary locations on your system.
-CMAKE=$(which cmake)
-NINJA=$(which ninja)
+echo ""
+cd ~/CodingFiles/High-Frequency-Trading-System
+mkdir -p build-release && cd build-release
 
-mkdir -p ./cmake-build-release
-$CMAKE -DCMAKE_BUILD_TYPE=Release -DCMAKE_MAKE_PROGRAM=$NINJA -G Ninja -S . -B ./cmake-build-release
+cmake -DPERF_TEST=OFF -DCMAKE_BUILD_TYPE=Release ..
+make -j$(nproc)
 
-#$CMAKE --build ./cmake-build-release --target clean -j 4
-$CMAKE --build ./cmake-build-release --target all -j 4
+cd ..
+mkdir -p build-debug && cd build-debug
 
-#mkdir -p ./cmake-build-debug
-#$CMAKE -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=$NINJA -G Ninja -S . -B ./cmake-build-debug
+cmake -DPERF_TEST=OFF -DCMAKE_BUILD_TYPE=Debug ..
+make -j$(nproc)
 
-#$CMAKE --build ./cmake-build-debug --target clean -j 4
-#$CMAKE --build ./cmake-build-debug --target all -j 4
+cd ..
+mkdir -p build-perf-test && cd build-perf-test
+
+cmake -DPERF_TEST=ON -DCMAKE_BUILD_TYPE=Release ..
+make -j$(nproc)
