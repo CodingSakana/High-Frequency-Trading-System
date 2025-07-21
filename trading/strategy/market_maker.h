@@ -3,6 +3,10 @@
 #include "common/macros.h"
 #include "common/logging.h"
 
+#ifdef PERF
+#include "common/perf_utils.h"
+#endif
+
 #include "order_manager.h"
 #include "feature_engine.h"
 

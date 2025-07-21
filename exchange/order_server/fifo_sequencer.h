@@ -3,6 +3,10 @@
 #include "common/macros.h"
 #include "common/thread_utils.h"
 
+#ifdef PERF
+#include "common/perf_utils.h"
+#endif
+
 #include "order_server/client_request.h"
 
 namespace Exchange

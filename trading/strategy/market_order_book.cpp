@@ -20,11 +20,13 @@ MarketOrderBook::~MarketOrderBook() {
 
 /// Process market data update and update the limit order book.
 auto MarketOrderBook::onMarketUpdate(const Exchange::MEMarketUpdate* market_update) noexcept -> void {
-    bool was_empty = (!bids_by_price_ && !asks_by_price_);
+    logger_->log("%:% %() % OrderBook\n%\n", __FILE__, __LINE__, __FUNCTION__, Common::getCurrentTimeStr(&time_str_),
+                 toString(false, true));
+    // bool was_empty = (!bids_by_price_ && !asks_by_price_);
     const auto bid_updated =
-        (was_empty || (bids_by_price_ && market_update->side_ == Side::BUY && market_update->price_ >= bids_by_price_->price_));
+        (!bids_by_price_ || (bids_by_price_ && market_update->side_ == Side::BUY && market_update->price_ >= bids_by_price_->price_));
     const auto ask_updated =
-        (was_empty || (asks_by_price_ && market_update->side_ == Side::SELL && market_update->price_ <= asks_by_price_->price_));
+        (!asks_by_price_ || (asks_by_price_ && market_update->side_ == Side::SELL && market_update->price_ <= asks_by_price_->price_));
 
     switch (market_update->type_) {
     case Exchange::MarketUpdateType::ADD: {

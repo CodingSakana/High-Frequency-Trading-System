@@ -8,6 +8,10 @@
 #include "order_server/client_response.h"
 #include "market_data/market_update.h"
 
+#ifdef PERF
+#include "common/perf_utils.h"
+#endif
+
 #include "me_order.h"
 
 using namespace Common;

@@ -1,20 +1,26 @@
 #!/bin/bash
+set -euo pipefail
 
-echo ""
-cd ~/CodingFiles/High-Frequency-Trading-System
-mkdir -p build-release && cd build-release
+PROJECT_ROOT=~/CodingFiles/High-Frequency-Trading-System
 
-cmake -DPERF_TEST=OFF -DCMAKE_BUILD_TYPE=Release ..
-make -j$(nproc)
+build() {
+  local name=$1
+  local perf_flag=$2
+  local build_type=$3
 
-cd ..
-mkdir -p build-debug && cd build-debug
+  echo -e "\n=== Building ${name} (PERF_TEST=${perf_flag}, BUILD_TYPE=${build_type}) ==="
+  rm -rf "${PROJECT_ROOT}/${name}"
+  mkdir -p "${PROJECT_ROOT}/${name}"
+  pushd "${PROJECT_ROOT}/${name}" > /dev/null
 
-cmake -DPERF_TEST=OFF -DCMAKE_BUILD_TYPE=Debug ..
-make -j$(nproc)
+  cmake -G Ninja -DPERF_TEST=${perf_flag} -DCMAKE_BUILD_TYPE=${build_type} ..
+  ninja -j$(nproc)
 
-cd ..
-mkdir -p build-perf-test && cd build-perf-test
+  popd > /dev/null
+}
 
-cmake -DPERF_TEST=ON -DCMAKE_BUILD_TYPE=Release ..
-make -j$(nproc)
+build build-release    OFF Release
+build build-debug      OFF Debug
+build build-perf-test  ON  Release
+
+echo -e "\nAll builds completed!"

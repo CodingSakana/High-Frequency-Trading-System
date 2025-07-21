@@ -24,6 +24,9 @@
 #include "common/thread_utils.h"
 #include "common/lf_queue.h"
 #include "common/macros.h"
+#ifdef PERF
+#include "common/perf_utils.h"
+#endif
 
 #include "order_server/client_request.h"
 #include "order_server/client_response.h"

@@ -8,6 +8,10 @@
 #include "common/logging.h"
 #include "common/types.h"
 
+#ifdef PERF
+#include "common/perf_utils.h"
+#endif
+
 #include "exchange/order_server/client_response.h"
 
 #include "om_order.h"

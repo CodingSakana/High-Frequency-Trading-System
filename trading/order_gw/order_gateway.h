@@ -24,6 +24,10 @@
 #include "common/macros.h"
 #include "common/tcp_server.h"
 
+#ifdef PERF
+#include "common/perf_utils.h"
+#endif
+
 #include "exchange/order_server/client_request.h"
 #include "exchange/order_server/client_response.h"
 

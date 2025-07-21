@@ -10,7 +10,7 @@
  *              先找到 ticker_id 对应的 PositionInfo
  *              后调用 PositionInfo::addFill() 更新持仓信息，包括持仓、未/已 实现盈亏、总盈亏
  *          algoOnOrderUpdate_() 通知 algo 处理订单更新
- *              if (是 MarketMaker 或 LiquidityTaker) 调用对应的 onOrderUpdate() 函数
+ *              调用对应的 onOrderUpdate() 函数
  *                  调用 OrderManager::onOrderUpdate() 更新订单管理器中的订单状态
  *                      根据 client_response 的类型更新本地 Order 的状态
  *  for 循环获取 LFQueue incoming_md_updates_ 的数据

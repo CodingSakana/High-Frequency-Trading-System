@@ -9,6 +9,9 @@
 #include <functional>
 
 #include "market_data/snapshot_synthesizer.h"
+#ifdef PERF
+#include "common/perf_utils.h"
+#endif
 
 namespace Exchange
 {

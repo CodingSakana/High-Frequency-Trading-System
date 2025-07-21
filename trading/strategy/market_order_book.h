@@ -6,6 +6,10 @@
 #include "common/mem_pool.h"
 #include "common/logging.h"
 
+#ifdef PERF
+#include "common/perf_utils.h"
+#endif
+
 #include "market_order.h"
 #include "exchange/market_data/market_update.h"
 

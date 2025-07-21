@@ -62,6 +62,10 @@
 #include "common/macros.h"
 #include "common/mcast_socket.h"
 
+#ifdef PERF
+#include "common/perf_utils.h"
+#endif
+
 #include "exchange/market_data/market_update.h"
 
 namespace Trading

@@ -35,6 +35,10 @@
 #include "order_server/client_response.h"
 #include "order_server/fifo_sequencer.h"
 
+#ifdef PERF
+#include "common/perf_utils.h"
+#endif
+
 namespace Exchange
 {
 class OrderServer {
