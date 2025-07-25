@@ -1,0 +1,11 @@
+ipython
+jupyter_client
+jupyter_core
+notebook
+hvplot
+numpy
+pandas
+plotly
+session_info
+socksio
+pyparsing
