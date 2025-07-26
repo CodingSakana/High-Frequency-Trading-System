@@ -1,6 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
+# 需要修改成对应的项目路径
 PROJECT_ROOT=~/CodingFiles/High-Frequency-Trading-System
 
 build() {
@@ -23,4 +24,5 @@ build build-release    OFF Release
 build build-debug      OFF Debug
 build build-perf-test  ON  Release
 
+# -e 启动反斜杠转译
 echo -e "\nAll builds completed!"

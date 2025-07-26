@@ -36,7 +36,9 @@ auto MarketDataPublisher::run() noexcept -> void {
         /* 这里就是发布 update 的主要代码 */
         for (auto market_update = outgoing_md_updates_->getNextToRead(); outgoing_md_updates_->size() && market_update;
              market_update = outgoing_md_updates_->getNextToRead()) {
-
+#ifdef PERF
+            TTT_MEASURE(T5_MarketDataPublisher_LFQueue_read, logger_);
+#endif
             logger_.log("%:% %() % Sending seq:% %\n", __FILE__, __LINE__, __FUNCTION__,
                         Common::getCurrentTimeStr(&time_str_), next_inc_seq_num_, market_update->toString().c_str());
 

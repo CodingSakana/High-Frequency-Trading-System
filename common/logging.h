@@ -186,7 +186,8 @@ public:
             }
             pushValue(*s++);
         }
-        FATAL("extra arguments provided to log()");
+        std::string t;
+        FATAL(std::string("extra arguments provided to log() ") + getCurrentTimeStr(&t));
     }
 
     /// Overload for case where no substitution in the string is necessary.

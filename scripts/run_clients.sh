@@ -2,7 +2,7 @@
 
 # ./trading_main CLIENT_ID ALGO_TYPE [CLIP_1 THRESH_1 MAX_ORDER_SIZE_1 MAX_POS_1 MAX_LOSS_1] [CLIP_2 THRESH_2 MAX_ORDER_SIZE_2 MAX_POS_2 MAX_LOSS_2] ...
 
-./build-release/trading_main  1 MAKER \
+./build-perf-test/trading_main  1 MAKER \
                                   100 0.6 150 300 -100 \
                                   60 0.6 150 300 -100 \
                                   150 0.5 250 600 -100 \
@@ -13,7 +13,7 @@
                                   100 0.3 250 300 -100 &
 sleep 5
 
-./build-release/trading_main  2 MAKER \
+./build-perf-test/trading_main  2 MAKER \
                                   2100 0.4 2150 2300 -1100 \
                                   260 0.8 2150 2300 -1100 \
                                   2150 0.2 2250 2600 -1100 \
@@ -24,7 +24,7 @@ sleep 5
                                   2100 0.3 2250 2300 -1100 &
 sleep 5
 
-./build-release/trading_main  3 TAKER \
+./build-perf-test/trading_main  3 TAKER \
                                   300 0.8 350 300 -300 \
                                   60 0.7 350 300 -300 \
                                   350 0.5 250 600 -300 \
@@ -35,7 +35,7 @@ sleep 5
                                   300 0.8 350 300 -300 &
 sleep 5
 
-./build-release/trading_main  4 TAKER \
+./build-perf-test/trading_main  4 TAKER \
                                   4100 0.8 4150 4300 -1100 \
                                   460 0.9 4150 4300 -1100 \
                                   4150 0.4 4450 4600 -1100 \
@@ -46,7 +46,7 @@ sleep 5
                                   4100 0.9 4450 4300 -1100 &
 sleep 5
 
-./build-release/trading_main  5 RANDOM &
+./build-perf-test/trading_main  5 RANDOM &
 sleep 5
 
 wait

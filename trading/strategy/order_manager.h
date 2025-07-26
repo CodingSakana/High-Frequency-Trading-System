@@ -76,8 +76,8 @@ public:
 #ifdef PERF
                 END_MEASURE(Trading_OrderManager_cancelOrder, (*logger_));
 #endif   
-            } else if (order->qty_ != qty || order->price_ != price) {
-            // 同价改量 || 同价改量：先做风控
+            } else if (order->price_ != price || order->qty_ != qty) {
+            // 同量改价 || 同价改量：先做风控
 #ifdef PERF
                 START_MEASURE(Trading_RiskManager_checkPreTradeRisk);
 #endif
@@ -103,7 +103,7 @@ public:
                     END_MEASURE(Trading_OrderManager_newOrder, (*logger_));
 #endif
                 } else {
-                    logger_->log("%:% %() Ticker:% Side:% Qty:% RiskCheckResult:%\n", __FILE__, __LINE__, __FUNCTION__,
+                    logger_->log("%:% %() % Ticker:% Side:% Qty:% RiskCheckResult:%\n", __FILE__, __LINE__, __FUNCTION__,
                                  Common::getCurrentTimeStr(&time_str_), tickerIdToString(ticker_id), sideToString(side),
                                  qtyToString(qty), riskCheckResultToString(r));
                 }
