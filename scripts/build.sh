@@ -1,8 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-# 需要修改成对应的项目路径
-PROJECT_ROOT=~/CodingFiles/High-Frequency-Trading-System
+PROJECT_ROOT=.
 
 build() {
   local name=$1
