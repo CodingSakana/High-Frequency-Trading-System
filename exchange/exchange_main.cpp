@@ -1,3 +1,10 @@
+/**
+ * 这里创建了
+ *      ME
+ *      MDP 这里面又创建了 snapshot synthesizer
+ *      Order Server
+ */
+
 #include <csignal>
 
 #include "matcher/matching_engine.h"

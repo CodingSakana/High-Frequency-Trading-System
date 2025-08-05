@@ -14,7 +14,7 @@
  *                  MEOrderBook::sendClientResponse() 写入 LFQueue outgoing_ogw_responses_ 等待 order server 取
  *                  MEOrderBook::sendMarketUpdate() 写入 LFQueue outgoing_md_updates_ 等待 MDP 取
  *          if (经过撮合还有剩) MEOrderBook::addOrder() 添加订单到订单簿
- *          MEOrderBook::sendMarketUpdate() 发送市场数据更新给市场数据发布者
+ *          MEOrderBook::sendMarketUpdate() 写入 LFQueue outgoing_md_updates_ 等待 MDP 取
  *      MEOrderBook::cancel() 取消订单
  *          MEOrderBook::removeOrder() 删除订单
  *          MEOrderBook::sendMarketUpdate() 写入 LFQueue outgoing_md_updates_ 等待 MDP 取
