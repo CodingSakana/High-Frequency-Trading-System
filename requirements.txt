@@ -1,11 +1,2 @@
-ipython
-jupyter_client
-jupyter_core
-notebook
-hvplot
-numpy
-pandas
-plotly
-session_info
-socksio
-pyparsing
+# 该项目核心功能（C++ 服务与 scripts/perf_benchmark.py）不依赖任何第三方 Python 包。
+# 如需运行 Notebook 可视化，请使用 requirements-notebook.txt。
